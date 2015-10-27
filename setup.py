@@ -34,6 +34,7 @@ setup(
         'annoy',
         'click',
         'DAWG',
+        'gensim',
         'mwparserfromhell',
         'numpy',
         'repoze.lru',

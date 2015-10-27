@@ -46,7 +46,6 @@ def build_dictionary(dump_file, out_file, **kwargs):
 @click.option('--word-negative', type=int, default=30)
 @click.option('--entity-negative', type=int, default=30)
 @click.option('--iteration', type=int, default=10)
-@click.option('--generate-links', is_flag=True)
 @click.option('--parallel/--no-parallel', default=True)
 @click.option('--pool-size', type=int, default=multiprocessing.cpu_count())
 @click.option('--chunk-size', type=int, default=100)
