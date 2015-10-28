@@ -6,7 +6,7 @@ from Cython.Build import cythonize
 
 setup(
     name='entity-vector',
-    version='0.0.1.10',
+    version='0.0.1.11',
     description='Joint embedding of words and Wikipedia entities',
     author='Studio Ousia',
     author_email='ikuya@ousia.jp',
