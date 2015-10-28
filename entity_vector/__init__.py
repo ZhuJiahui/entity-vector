@@ -22,6 +22,7 @@ def cli():
 @click.argument('out_file', type=click.File(mode='w'))
 @click.option('--min-word-count', type=int, default=5)
 @click.option('--min-entity-count', type=int, default=1)
+@click.option('--phrase', type=bool, is_flag=True)
 @click.option('--parallel/--no-parallel', default=True)
 @click.option('--pool-size', type=int, default=multiprocessing.cpu_count())
 @click.option('--chunk-size', type=int, default=100)

@@ -23,6 +23,7 @@ cdef class Dictionary:
     cdef public np.ndarray _ordered_keys
     cdef public int _size
     cdef public int _total_docs
+    cdef public bint _phrase
 
     cpdef Word get_word(self, unicode)
     cpdef Entity get_entity(self, unicode, bint resolve_redirect=?)

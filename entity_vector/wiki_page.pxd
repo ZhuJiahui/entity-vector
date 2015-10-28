@@ -15,4 +15,5 @@ cdef class WikiPage:
     cdef public unicode title
     cdef public str language
     cdef public unicode wiki_text
+    cdef _parse(self)
     cdef inline unicode _normalize_title(self, unicode)

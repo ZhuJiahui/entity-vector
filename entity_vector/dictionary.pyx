@@ -71,6 +71,10 @@ cdef class Dictionary:
         return self._total_docs
 
     @property
+    def phrase(self):
+        return self._phrase
+
+    @property
     def ordered_keys(self):
         if self._ordered_keys is None:
             self._ordered_keys = np.empty(len(self), dtype=np.object_)
@@ -138,7 +142,7 @@ cdef class Dictionary:
         return [(w, weight) for ((w, _), weight) in zip(word_counts, weights)]
 
     @staticmethod
-    def build(dump_reader, min_word_count, min_entity_count, parallel,
+    def build(dump_reader, min_word_count, min_entity_count, phrase, parallel,
               pool_size=multiprocessing.cpu_count(), chunk_size=100):
         logger.info('Starting to build a dictionary')
 
@@ -159,7 +163,8 @@ cdef class Dictionary:
         else:
             imap_func = imap
 
-        for (page, paragraphs) in imap_func(_extract_paragraphs, dump_reader):
+        f = partial(_extract_paragraphs, phrase=phrase)
+        for (page, paragraphs) in imap_func(f, dump_reader):
             if page.is_redirect:
                 entity_redirects[page.title] = page.redirect
 
@@ -188,6 +193,7 @@ cdef class Dictionary:
         ret = Dictionary()
         ret._id = uuid.uuid1().hex
         ret._total_docs = total_docs
+        ret._phrase = phrase
 
         logger.info('Step 2/3: Handling Wikipedia redirects...')
         # TODO: multiple redirects should be handled here
@@ -319,5 +325,5 @@ cdef class Dictionary:
         return key[7:]
 
 
-def _extract_paragraphs(page):
-    return (page, list(page.extract_paragraphs()))
+def _extract_paragraphs(page, *args, **kwargs):
+    return (page, list(page.extract_paragraphs(*args, **kwargs)))

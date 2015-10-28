@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import itertools
 import logging
 import mwparserfromhell
 import mwparserfromhell.nodes
+import numpy as np
 import re
 from collections import defaultdict, Counter
 from dawg import BytesDAWG
@@ -70,28 +72,29 @@ cdef class WikiPage:
 
         return self._normalize_title(dest)
 
-    def extract_paragraphs(self, min_paragraph_len=20):
-        cdef int n, start, end, char_start, char_end
-        cdef list paragraphs, tokens, items, words, prefixes
-        cdef dict end_index
-        cdef unicode text, title
+    def extract_paragraphs(self, int min_paragraph_len=20, bint phrase=False):
+        cdef int n, char_start, char_end, token_start, token_end
+        cdef unicode text, title, matched, link_text
+        cdef tuple wikilink_obj
+        cdef list text_arr, wikilinks_arr, tokens, mentions, words, paragraph,\
+            paragraphs, prefixes
+        cdef dict char_start_index, char_end_index, mention_index,\
+            wikilink_index
 
         if self.is_redirect:
             return
 
-        paragraphs = [[]]
-        tokenizer = _get_tokenizer(self.language)
+        text_arr = [u'']
+        wikilinks_arr = [[]]
 
-        for node in _parse_wiki_text(self.title, self.wiki_text).nodes:
+        for node in self._parse().nodes:
             if isinstance(node, mwparserfromhell.nodes.Text):
-                for (n, paragraph) in enumerate(unicode(node).split('\n')):
-                    tokens = tokenizer.tokenize(paragraph)
-                    items = [Word(token.text) for token in tokens]
-
+                for (n, text) in enumerate(unicode(node).split('\n')):
                     if n == 0:
-                        paragraphs[-1] += items
+                        text_arr[-1] += text
                     else:
-                        paragraphs.append(items)
+                        text_arr.append(text)
+                        wikilinks_arr.append([])
 
             elif isinstance(node, mwparserfromhell.nodes.Wikilink):
                 title = node.title.strip_code()
@@ -103,22 +106,81 @@ cdef class WikiPage:
                 else:
                     text = node.title.strip_code()
 
-                words = [Word(token.text) for token in tokenizer.tokenize(text)]
-                paragraphs[-1].append(
-                    WikiLink(self._normalize_title(title), text, words)
+                char_start = len(text_arr[-1])
+                char_end = char_start + len(text)
+
+                text_arr[-1] += text
+                wikilinks_arr[-1].append(
+                    ((char_start, char_end), self._normalize_title(title), text)
                 )
 
             elif isinstance(node, mwparserfromhell.nodes.Tag):
+                # include only bold or italic tags
                 if node.tag not in ('b', 'i'):
                     continue
                 if not node.contents:
                     continue
 
-                words = [
-                    Word(token.text)
-                    for token in tokenizer.tokenize(node.contents.strip_code())
-                ]
-                paragraphs[-1] += words
+                text_arr[-1] += node.contents.strip_code()
+
+        tokenizer = _get_tokenizer(self.language)
+        if phrase:
+            ner = _get_ner(self.language)
+
+        paragraphs = []
+
+        for (text, wikilinks) in zip(text_arr, wikilinks_arr):
+            tokens = tokenizer.tokenize(text)
+
+            char_start_index = {t.span[0]: n for (n, t) in enumerate(tokens)}
+            char_end_index = {t.span[1]: n for (n, t) in enumerate(tokens)}
+
+            wikilink_index = {}
+            for (n, wikilink_obj) in enumerate(wikilinks):
+                (char_start, char_end) = wikilink_obj[0]
+                if (
+                    char_start in char_start_index and
+                    char_end in char_end_index
+                ):
+                    token_start = char_start_index[char_start]
+                    wikilink_index[token_start] = wikilink_obj
+
+            if phrase:
+                mentions = ner.extract([t.text for t in tokens])
+                mention_index = {m.span[0]: m for (n, m) in enumerate(mentions)}
+
+            cur = 0
+            paragraph = []
+            for (n, token) in enumerate(tokens):
+                if n < cur:
+                    continue
+
+                if n in wikilink_index:
+                    ((char_start, char_end), title, link_text) = wikilink_index[n]
+                    token_start = char_start_index[char_start]
+                    token_end = char_end_index[char_end] + 1
+
+                    if phrase:
+                        words = [Word(link_text)]
+                    else:
+                        words = [Word(t.text)
+                                 for t in tokens[token_start:token_end]]
+
+                    paragraph.append(WikiLink(title, link_text, words))
+                    cur = token_end
+
+                elif phrase and n in mention_index:
+                    (token_start, token_end) = mention_index[n].span
+                    char_start = tokens[token_start].span[0]
+                    char_end = tokens[token_end-1].span[1]
+
+                    paragraph.append(Word(text[char_start:char_end]))
+                    cur = token_end
+
+                else:
+                    paragraph.append(Word(token.text))
+
+            paragraphs.append(paragraph)
 
         for paragraph in paragraphs:
             if (
@@ -128,6 +190,14 @@ cdef class WikiPage:
             ):
                 yield paragraph
 
+    cdef _parse(self):
+        try:
+            return mwparserfromhell.parse(self.wiki_text)
+
+        except Exception:
+            logger.exception('Failed to parse wiki text: %s', self.title)
+            return mwparserfromhell.parse('')
+
     cdef inline unicode _normalize_title(self, unicode title):
         title = title[0].upper() + title[1:]
         return title.replace('_', ' ')
@@ -135,21 +205,22 @@ cdef class WikiPage:
 
 @lru_cache(1)
 def _get_tokenizer(language):
+    from utils.tokenizer.opennlp import OpenNLPTokenizer
+    from utils.tokenizer.mecab import MeCabTokenizer
+
     if language == 'en':
-        from utils.tokenizer.opennlp import OpenNLPTokenizer
         return OpenNLPTokenizer()
     elif language == 'ja':
-        from utils.tokenizer.mecab import MeCabTokenizer
         return MeCabTokenizer()
     else:
         raise NotImplementedError('Unsupported language')
 
 
 @lru_cache(1)
-def _parse_wiki_text(title, wiki_text):
-    try:
-        return mwparserfromhell.parse(wiki_text)
+def _get_ner(language):
+    from utils.ner.stanford_ner import StanfordNER
 
-    except Exception:
-        logger.exception('Failed to parse wiki text: %s', title)
-        return mwparserfromhell.parse('')
+    if language == 'en':
+        return StanfordNER()
+    else:
+        raise NotImplementedError('Unsupported language')
