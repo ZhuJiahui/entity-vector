@@ -26,7 +26,7 @@ class EntityVector(object):
     def __init__(
         self, dictionary, size=300, word_alpha=0.025, word_min_alpha=0.0001,
         entity_alpha=0.025, entity_min_alpha=0.0001, word_window=10,
-        word_negative=30, entity_negative=30, iteration=10
+        word_negative=30, entity_negative=30, iteration=10, *args
     ):
         self.dictionary = dictionary
         self.syn0 = None
