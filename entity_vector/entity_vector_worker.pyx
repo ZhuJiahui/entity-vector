@@ -58,9 +58,7 @@ def train_page(WikiPage page):
     cdef list paragraph, target_words, entity_list, word_list
     cdef tuple span
 
-    for paragraph in page.extract_paragraphs(
-        generate_links=instance._generate_links
-    ):
+    for paragraph in page.extract_paragraphs():
         word_list = []
         entity_list = []
         for token in paragraph:
