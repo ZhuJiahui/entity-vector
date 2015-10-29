@@ -125,7 +125,10 @@ cdef class WikiPage:
 
         tokenizer = _get_tokenizer(self.language)
         if phrase:
-            ner = _get_ner(self.language)
+            try:
+                ner = _get_ner(self.language)
+            except NotImplementedError:
+                ner = None
 
         paragraphs = []
 
@@ -145,7 +148,7 @@ cdef class WikiPage:
                     token_start = char_start_index[char_start]
                     wikilink_index[token_start] = wikilink_obj
 
-            if phrase:
+            if phrase and ner:
                 mentions = ner.extract([t.text for t in tokens])
                 mention_index = {m.span[0]: m for (n, m) in enumerate(mentions)}
 
@@ -169,7 +172,7 @@ cdef class WikiPage:
                     paragraph.append(WikiLink(title, link_text, words))
                     cur = token_end
 
-                elif phrase and n in mention_index:
+                elif phrase and ner and n in mention_index:
                     (token_start, token_end) = mention_index[n].span
                     char_start = tokens[token_start].span[0]
                     char_end = tokens[token_end-1].span[1]
