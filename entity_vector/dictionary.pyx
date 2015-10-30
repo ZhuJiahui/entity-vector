@@ -283,7 +283,8 @@ cdef class Dictionary:
                 redirect_dict=self._redirect_dict.tobytes(),
                 size=self._size,
                 id=self._id,
-                total_docs=self._total_docs
+                total_docs=self._total_docs,
+                phrase=self._phrase
             )
         )
 
@@ -305,6 +306,7 @@ cdef class Dictionary:
         self._size = state['size']
         self._id = state['id']
         self._total_docs = state['total_docs']
+        self._phrase = state['phrase']
 
     cdef inline Item _create_item_from_key(self, unicode key):
         cdef str item_type
