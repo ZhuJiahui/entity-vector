@@ -306,7 +306,7 @@ cdef class Dictionary:
         self._size = state['size']
         self._id = state['id']
         self._total_docs = state['total_docs']
-        self._phrase = state['phrase']
+        self._phrase = state.get('phrase', False)
 
     cdef inline Item _create_item_from_key(self, unicode key):
         cdef str item_type
