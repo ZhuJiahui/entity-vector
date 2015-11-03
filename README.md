@@ -26,7 +26,7 @@ The embedding can be directly built using a Wikipedia dump retrieved from [Wikim
 
 ## Basic usage
 
-The pretrained model can be downloaded from the following.
+The pretrained model can be downloaded from the following links.
 Please note that these files must be placed in the same directory.
 
 * [enwiki_entity_vector_500_20151026.pickle](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026.pickle)
