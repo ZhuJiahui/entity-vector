@@ -10,18 +10,9 @@ The embedding can be directly built using a Wikipedia dump retrieved from [Wikim
 
 ## Installing package
 
-### From repository
-
 ```
 % pip install Cython numpy scipy
 % python setup.py install
-```
-
-### From private PyPI
-
-```
-% pip install Cython numpy scipy
-% pip install --extra-index-url=https://pypi.fury.io/FURY_TOKEN/studioousia/ entity-vector
 ```
 
 ## Basic usage
