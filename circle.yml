@@ -1,6 +1,0 @@
-machine:
-  java:
-    version: oraclejdk8
-dependencies:
-  pre:
-    - pip install Cython numpy

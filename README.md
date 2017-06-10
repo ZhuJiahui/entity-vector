@@ -1,28 +1,29 @@
-# entity-vector
-
-[![Circle CI](https://circleci.com/gh/studio-ousia/entity-vector.svg?style=svg&circle-token=2dd1ef26ef53e7044eeb2946d81c2cfc671e5937)](https://circleci.com/gh/studio-ousia/entity-vector)
+entity-vector
+=============
 
 ## Introduction
 
-This tool provides a Python implementation of building an embedding that maps words and Wikipedia entities into a same continuous vector space.
+This tool provides a Python implementation of learning embeddings of words and Wikipedia entities.
 
 The embedding can be directly built using a Wikipedia dump retrieved from [Wikimedia Downloads](http://dumps.wikimedia.org/).
+
+For further details, please refer to our [paper](https://arxiv.org/abs/1601.01343).
 
 ## Installing package
 
 ```
-% pip install Cython numpy scipy
-% python setup.py install
+% pip install Cython numpy
+% pip install -r requirements.txt
+% python setup.py develop
 ```
 
 ## Basic usage
 
-The pretrained model can be downloaded from the following links.
+The pretrained embedding can be downloaded from the following links.
 Please note that these files must be placed in the same directory.
 
 * [enwiki_entity_vector_500_20151026.pickle](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026.pickle)
 * [enwiki_entity_vector_500_20151026_syn0.npy](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026_syn0.npy)
-* [enwiki_entity_vector_500_20151026.ann](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026.ann) (required for vector similarity search)
 
 
 ```python
@@ -59,3 +60,24 @@ memmap([ -3.51071961e-03,   4.82281654e-01,   6.72443198e-01,
 >>> entvec.get_similarity(word, entity)
 0.90466782126690559
 ```
+
+## Reference
+
+If you use the code or the pretrained embedding in your research, please cite the following paper:
+
+```
+@InProceedings{yamada-EtAl:2016:CoNLL,
+author    = {Yamada, Ikuya  and  Shindo, Hiroyuki  and  Takeda, Hideaki  and  Takefuji, Yoshiyasu},
+title     = {Joint Learning of the Embedding of Words and Entities for Named Entity Disambiguation},
+booktitle = {Proceedings of The 20th SIGNLL Conference on Computational Natural Language Learning},
+month     = {August},
+year      = {2016},
+address   = {Berlin, Germany},
+publisher = {Association for Computational Linguistics},
+pages     = {250--259}
+}
+```
+
+## License
+
+[Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
