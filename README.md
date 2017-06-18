@@ -1,15 +1,12 @@
-entity-vector
-=============
+Joint Learning of the Embedding of Words and Entities for Named Entity Disambiguation
+===
 
 ## Introduction
 
-This tool provides a Python implementation of learning the embeddings of words and Wikipedia entities.
+This is a Python implementation of the method of learning embeddings of words and Wikipedia entities proposed in this [paper](https://arxiv.org/abs/1601.01343).
+The embeddings can be directly learned using a Wikipedia dump retrieved from [Wikimedia Downloads](http://dumps.wikimedia.org/).
 
-The embedding can be directly built using a Wikipedia dump retrieved from [Wikimedia Downloads](http://dumps.wikimedia.org/).
-
-For further details, please refer to our [paper](https://arxiv.org/abs/1601.01343).
-
-## Installing package
+## Install
 
 ```
 % pip install Cython numpy
@@ -17,7 +14,7 @@ For further details, please refer to our [paper](https://arxiv.org/abs/1601.0134
 % python setup.py develop
 ```
 
-## Basic usage
+## Basic Usage
 
 The pre-trained embedding can be downloaded from the following links.
 Please note that these files must be placed in the same directory.
@@ -29,7 +26,10 @@ Alternatively, the embedding can be built by using the following commands:
 
 ```
 % entity-vector build_dictionary <WIKIPEDIA_DUMP_FILE> <DICTIONARY_FILE>
+% entity-vector train_embedding <WIKIPEDIA_DUMP_FILE> <DICTIONARY_FILE> <OUT_FILE>
 ```
+
+## Sample Code
 
 ```python
 >>> from entity_vector import EntityVector
