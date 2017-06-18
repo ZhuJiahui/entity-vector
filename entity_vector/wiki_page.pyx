@@ -71,16 +71,11 @@ cdef class WikiPage:
         return self._normalize_title(dest)
 
     def extract_paragraphs(self, min_paragraph_len=20):
-        cdef int n, start, end, char_start, char_end
-        cdef list paragraphs, tokens, items, words, prefixes
-        cdef dict end_index
-        cdef unicode text, title
-
         if self.is_redirect:
             return
 
         paragraphs = [[]]
-        tokenizer = _get_tokenizer(self.language)
+        tokenizer = _get_tokenizer()
 
         for node in _parse_wiki_text(self.title, self.wiki_text).nodes:
             if isinstance(node, mwparserfromhell.nodes.Text):
@@ -134,15 +129,9 @@ cdef class WikiPage:
 
 
 @lru_cache(1)
-def _get_tokenizer(language):
-    if language == 'en':
-        from utils.tokenizer.opennlp import OpenNLPTokenizer
-        return OpenNLPTokenizer()
-    elif language == 'ja':
-        from utils.tokenizer.mecab import MeCabTokenizer
-        return MeCabTokenizer()
-    else:
-        raise NotImplementedError('Unsupported language')
+def _get_tokenizer():
+    from utils.tokenizer.opennlp import OpenNLPTokenizer
+    return OpenNLPTokenizer()
 
 
 @lru_cache(1)

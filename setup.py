@@ -6,7 +6,7 @@ from Cython.Build import cythonize
 
 setup(
     name='entity-vector',
-    version='0.0.1.11',
+    version='0.0.2',
     description='Joint embedding of words and Wikipedia entities',
     author='Studio Ousia',
     author_email='ikuya@ousia.jp',
@@ -25,21 +25,6 @@ setup(
         ),
         Extension(
             '*', ['entity_vector/utils/tokenizer/*.pyx'],
-        ),
-        Extension(
-            '*', ['entity_vector/utils/ner/*.pyx'],
-        ),
+        )
     ]),
-    install_requires=[
-        'annoy',
-        'click',
-        'DAWG',
-        'gensim',
-        'mwparserfromhell',
-        'numpy',
-        'repoze.lru',
-        'scipy',
-    ],
-    tests_require=['nose'],
-    test_suite='nose.collector',
 )

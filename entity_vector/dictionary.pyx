@@ -84,9 +84,6 @@ cdef class Dictionary:
         return self._create_item_from_key(word)
 
     cpdef Entity get_entity(self, unicode title, bint resolve_redirect=True):
-        cdef int index
-        cdef unicode key
-
         if resolve_redirect and title in self._redirect_dict:
             index = self._redirect_dict[title][0][0]
             return self[index]
@@ -96,29 +93,17 @@ cdef class Dictionary:
             return self._create_item_from_key(key)
 
     def words(self):
-        cdef unicode key
-        cdef str item_type
-
         for (key, (item_type, _, _, _)) in self._dict.iteritems():
             if item_type == WORD_TYPE:
                 yield self._create_item_from_key(key)
 
     def entities(self):
-        cdef unicode key
-        cdef str item_type
-
         for (key, (item_type, _, _, _)) in self._dict.iteritems():
             if item_type == ENTITY_TYPE:
                 yield self._create_item_from_key(key)
 
     cpdef list get_bow_vector(self, words, bint tfidf=True,
                               bint normalize=True):
-        cdef int c
-        cdef float norm, weight
-        cdef unicode s
-        cdef list word_counts, weights
-        cdef Word w
-
         word_counts = [
             (self[s.lower()], c) for (s, c) in Counter(words).items()
             if s.lower() in self
@@ -148,9 +133,6 @@ cdef class Dictionary:
         entity_counter = Counter()
         entity_doc_counter = Counter()
         entity_redirects = {}
-
-        cdef list paragraph, paragraphs
-        cdef WikiPage page
 
         logger.info('Step 1/3: Processing Wikipedia pages...')
         if parallel:
@@ -248,8 +230,6 @@ cdef class Dictionary:
         return bool(k in self._dict)
 
     def __iter__(self):
-        cdef unicode key
-
         for key in self._dict.iterkeys():
             yield self._create_item_from_key(key)
 

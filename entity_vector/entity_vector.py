@@ -5,21 +5,17 @@ import logging
 import multiprocessing
 import numpy as np
 import os
-from annoy import AnnoyIndex
 from ctypes import c_float, c_uint, c_uint64
 from functools import partial
 from itertools import imap
 from multiprocessing.pool import Pool
+from scipy.spatial.distance import cosine
 
 from . import REAL
 from dictionary import Item, Entity, Word
 from entity_vector_worker import init_worker, train_page
 
 logger = logging.getLogger(__name__)
-
-
-def cosine(vec1, vec2):
-    return np.dot(vec1, vec2) / np.linalg.norm(vec1) / np.linalg.norm(vec2)
 
 
 class EntityVector(object):
@@ -44,7 +40,6 @@ class EntityVector(object):
 
         self._word_neg_table = None
         self._entity_neg_table = None
-        self._annoy_index = None
 
         self._word_alpha = None
         self._entity_alpha = None
@@ -85,7 +80,7 @@ class EntityVector(object):
         return self.syn0[item.index]
 
     def get_similarity(self, item1, item2):
-        return cosine(self.syn0[item1.index], self.syn0[item2.index])
+        return 1.0 - cosine(self.syn0[item1.index], self.syn0[item2.index])
 
     def __getitem__(self, key):
         if isinstance(key, Item):
@@ -109,28 +104,15 @@ class EntityVector(object):
 
         raise KeyError()
 
-    def most_similar(self, item, count=100, search_k=-1, recalc_sim=True):
-        return self.most_similar_by_vector(self.get_vector(item), count,
-                                           search_k, recalc_sim)
+    def most_similar(self, item, count=100):
+        return self.most_similar_by_vector(self.get_vector(item), count)
 
-    def most_similar_by_vector(self, vec, count=100, search_k=-1,
-                               recalc_sim=True):
-        if not self._annoy_index:
-            raise RuntimeError('Failed to find the vector index')
+    def most_similar_by_vector(self, vec, count=100):
+        dst = (np.dot(self.syn0, vec) / np.linalg.norm(self.syn0, axis=1) /
+               np.linalg.norm(vec))
+        indexes = np.argsort(-dst)
 
-        ret = [
-            (self.dictionary[i], dist)
-            for (i, dist) in zip(*self._annoy_index.get_nns_by_vector(
-                vec, count, search_k, True
-            ))
-        ]
-        if recalc_sim:
-            ret = sorted(
-                [(o[0], cosine(vec, self.get_vector(o[0]))) for o in ret],
-                key=lambda k: k[1], reverse=True
-            )
-
-        return ret
+        return [(self.dictionary[ind], dst[ind]) for ind in indexes[:count]]
 
     def __len__(self):
         return len(self.dictionary)
@@ -155,9 +137,6 @@ class EntityVector(object):
                 pickle.dump(list(self._entity_neg_table), f,
                             protocol=pickle.HIGHEST_PROTOCOL)
 
-        if self._annoy_index:
-            self._annoy_index.save(out_file + '.ann')
-
         if self.syn0 is not None:
             np.save(out_file + '_syn0.npy', self.syn0)
         if self.syn1 is not None:
@@ -181,10 +160,6 @@ class EntityVector(object):
                 ret._entity_neg_table = multiprocessing.RawArray(
                     c_uint, pickle.load(f)
                 )
-
-        if os.path.isfile(in_file + '.ann'):
-            ret._annoy_index = AnnoyIndex(ret._size, 'angular')
-            ret._annoy_index.load(in_file + '.ann')
 
         if os.path.isfile(in_file + '_syn0.npy'):
             ret.syn0 = np.load(in_file + '_syn0.npy', mmap_mode=numpy_mmap_mode)
@@ -271,22 +246,6 @@ class EntityVector(object):
         self.syn1 = syn1
         self._word_neg_table = word_neg_table
         self._entity_neg_table = entity_neg_table
-
-    def init_sims(self):
-        logger.info('Precomputing L2-norms of word vectors')
-
-        for i in xrange(self.syn0.shape[0]):
-            self.syn0[i, :] /= np.sqrt((self.syn0[i, :] ** 2).sum(-1))
-
-    def build_vector_index(self, n_trees=10):
-        logger.info('Creating Annoy search index...')
-
-        index = AnnoyIndex(self._size, 'angular')
-        for (i, v) in enumerate(self.syn0):
-            index.add_item(i, v)
-
-        index.build(n_trees)
-        self._annoy_index = index
 
     def _build_word_neg_table(self, table_size=100000000, power=0.75):
         logger.info('Creating word index table for negative sampling...')

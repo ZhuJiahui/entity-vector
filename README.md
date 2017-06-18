@@ -3,7 +3,7 @@ entity-vector
 
 ## Introduction
 
-This tool provides a Python implementation of learning embeddings of words and Wikipedia entities.
+This tool provides a Python implementation of learning the embeddings of words and Wikipedia entities.
 
 The embedding can be directly built using a Wikipedia dump retrieved from [Wikimedia Downloads](http://dumps.wikimedia.org/).
 
@@ -19,12 +19,17 @@ For further details, please refer to our [paper](https://arxiv.org/abs/1601.0134
 
 ## Basic usage
 
-The pretrained embedding can be downloaded from the following links.
+The pre-trained embedding can be downloaded from the following links.
 Please note that these files must be placed in the same directory.
 
 * [enwiki_entity_vector_500_20151026.pickle](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026.pickle)
 * [enwiki_entity_vector_500_20151026_syn0.npy](http://entity-vector.s3.amazonaws.com/pub/enwiki_entity_vector_500_20151026_syn0.npy)
 
+Alternatively, the embedding can be built by using the following commands:
+
+```
+% entity-vector build_dictionary <WIKIPEDIA_DUMP_FILE> <DICTIONARY_FILE>
+```
 
 ```python
 >>> from entity_vector import EntityVector

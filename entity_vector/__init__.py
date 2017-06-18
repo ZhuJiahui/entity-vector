@@ -49,7 +49,7 @@ def build_dictionary(dump_file, out_file, **kwargs):
 @click.option('--parallel/--no-parallel', default=True)
 @click.option('--pool-size', type=int, default=multiprocessing.cpu_count())
 @click.option('--chunk-size', type=int, default=100)
-def build_embedding(dump_file, dic_file, out_file, **kwargs):
+def train_embedding(dump_file, dic_file, out_file, **kwargs):
     from wiki_dump_reader import WikiDumpReader
 
     dump_reader = WikiDumpReader(dump_file)
@@ -63,8 +63,5 @@ def build_embedding(dump_file, dic_file, out_file, **kwargs):
 
     ent_vec = EntityVector(dictionary, **kwargs)
     ent_vec.train(dump_reader, **train_kwargs)
-
-    ent_vec.init_sims()
-    ent_vec.build_vector_index()
 
     ent_vec.save(out_file)
