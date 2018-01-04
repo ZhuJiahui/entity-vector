@@ -179,7 +179,7 @@ cdef inline _train_pair(Item item, Item item2, REAL_t alpha, int negative,
         f = <REAL_t>(blas.sdot(&size, &syn0_[row1], &ONE, &syn1_[row2], &ONE))
         if f > MAX_EXP:
             g = (label - 1.0) * alpha
-        if f < -MAX_EXP:
+        elif f < -MAX_EXP:
             g = (label - 0.0) * alpha
         else:
             f = 1.0 / (1.0 + exp(-f))
